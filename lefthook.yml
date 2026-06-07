@@ -20,7 +20,7 @@ pre-push:
       run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 
     audit:
-      run: cargo audit
+      run: cargo audit --file src-tauri/Cargo.lock
 
     test:
       run: cargo test --manifest-path src-tauri/Cargo.toml
