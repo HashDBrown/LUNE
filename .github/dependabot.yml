@@ -1,0 +1,28 @@
+version: 2
+updates:
+  # Rust crates (Tauri backend)
+  - package-ecosystem: cargo
+    directory: /src-tauri
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      # Bundle minor/patch bumps into one PR to cut review noise.
+      cargo-minor-patch:
+        update-types: ["minor", "patch"]
+
+  # JS/TS frontend
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      npm-minor-patch:
+        update-types: ["minor", "patch"]
+
+  # Keep the actions in your workflows (checkout@v4, etc.) up to date.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
