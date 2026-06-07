@@ -1,0 +1,26 @@
+pre-commit:
+  parallel: true
+  commands:
+
+    secrets:
+      run: git diff --cached --no-color | gitleaks stdin --no-banner
+
+    fmt:
+      glob: "*.rs"
+      run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+
+    eslint:
+      glob: "*.{js,ts,jsx,tsx,svelte,vue}"
+      run: npx eslint {staged_files}
+
+pre-push:
+  parallel: true
+  commands:
+    clippy:
+      run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+
+    audit:
+      run: cargo audit
+
+    test:
+      run: cargo test --manifest-path src-tauri/Cargo.toml
