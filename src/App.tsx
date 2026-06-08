@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { markdown } from "@codemirror/lang-markdown";
 import { languages } from "@codemirror/language-data";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { MilkdownEditor } from "./MilkdownEditor";
 import "./App.css";
 
 const initialSource = `# Welcome to HIKMA حكمة
@@ -43,7 +42,7 @@ function App() {
         onChange={(value) => setSource(value)}
       />
       <div className="editor-preview">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{source}</ReactMarkdown>
+        <MilkdownEditor markdown={source} onChange={setSource} />
       </div>
     </main>
   );
