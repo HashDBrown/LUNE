@@ -1,50 +1,57 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
+import { useEffect, useState } from "react";
+import CodeMirror from "@uiw/react-codemirror";
+import { markdown } from "@codemirror/lang-markdown";
+import { languages } from "@codemirror/language-data";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import "./App.css";
 
-function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+const initialSource = `# Welcome to HIKMA حكمة
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+Start typing **Markdown** on the left — the preview updates on the right.
+
+- Supports GitHub-flavored Markdown
+- Tables, task lists, strikethrough, and more
+
+\`\`\`js
+// Fenced code blocks get syntax-highlighted too
+const greet = (name) => \`Hello, \${name}!\`;
+\`\`\`
+`;
+
+const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
+
+function App() {
+  const [source, setSource] = useState(initialSource);
+  const [isDark, setIsDark] = useState(prefersDark.matches);
+
+  useEffect(() => {
+    const onChange = (e: MediaQueryListEvent) => setIsDark(e.matches);
+    prefersDark.addEventListener("change", onChange);
+    return () => prefersDark.removeEventListener("change", onChange);
+  }, []);
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="app">
+      <header className="toolbar">
+        <span className="toolbar-brand">HIKMA <span className="toolbar-brand-ar">حكمة</span></span>
+        <span className="toolbar-mode">Markdown</span>
+      </header>
+      <main className="editor">
+      <CodeMirror
+        className="editor-source"
+        value={source}
+        height="100%"
+        theme={isDark ? "dark" : "light"}
+        basicSetup={{ lineNumbers: true, foldGutter: false }}
+        extensions={[markdown({ codeLanguages: languages })]}
+        onChange={(value) => setSource(value)}
+      />
+      <div className="editor-preview">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{source}</ReactMarkdown>
       </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
     </main>
+    </div>
   );
 }
 
