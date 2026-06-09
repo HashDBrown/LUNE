@@ -41,6 +41,7 @@ function Editor({ markdown, onChange }: MilkdownEditorProps) {
 
   return (
     <div
+      style={{ width: "100%", height: "100%" }}
       onFocusCapture={() => (focused.current = true)}
       onBlurCapture={() => (focused.current = false)}
     >
