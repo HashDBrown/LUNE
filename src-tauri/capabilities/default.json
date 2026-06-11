@@ -12,11 +12,11 @@
     "fs:default",
     {
       "identifier": "fs:allow-read-text-file",
-      "allow": [{ "path": "**" }]
+      "allow": [{ "path": "**/*.md" }, { "path": "**/*.markdown" }, { "path": "**/*.txt" }]
     },
     {
       "identifier": "fs:allow-write-text-file",
-      "allow": [{ "path": "**" }]
+      "allow": [{ "path": "**/*.md" }, { "path": "**/*.markdown" }, { "path": "**/*.txt" }]
     }
   ]
 }
