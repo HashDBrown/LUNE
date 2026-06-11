@@ -57,6 +57,93 @@ body,
   color: #8a6f30;
 }
 
+.toolbar-file {
+  font-size: 0.75rem;
+  color: #aaa;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toolbar-dirty {
+  color: #c9a84c;
+  font-size: 0.6rem;
+  line-height: 1;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+.toolbar-btn {
+  font: inherit;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: #ccc;
+  background: #222236;
+  border: 1px solid #2a2a3e;
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.toolbar-btn:hover:not(:disabled) {
+  background: #2e2e4a;
+  color: #fff;
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.toolbar-recent {
+  position: relative;
+}
+
+.toolbar-recent-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 10;
+  min-width: 180px;
+  max-width: 320px;
+  list-style: none;
+  background: #1b1b2c;
+  border: 1px solid #2a2a3e;
+  border-radius: 6px;
+  padding: 4px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+.toolbar-recent-menu button {
+  font: inherit;
+  font-size: 0.75rem;
+  display: block;
+  width: 100%;
+  text-align: left;
+  color: #ccc;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toolbar-recent-menu button:hover {
+  background: #2e2e4a;
+  color: #fff;
+}
+
 .toolbar-mode {
   font-size: 0.7rem;
   color: #888;

@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { markdown } from "@codemirror/lang-markdown";
 import { languages } from "@codemirror/language-data";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { ask, message, open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
+import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import "./App.css";
 
 const initialSource = `# Welcome to HIKMA حكمة
@@ -21,9 +24,43 @@ const greet = (name) => \`Hello, \${name}!\`;
 
 const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
 
+// File pickers and native fs are unavailable when the frontend runs in a plain browser
+const isTauri = "__TAURI_INTERNALS__" in window;
+
+const RECENT_KEY = "hikma.recent-files";
+const MAX_RECENT = 10;
+
+const markdownFilters = [{ name: "Markdown", extensions: ["md", "markdown", "txt"] }];
+
+function loadRecentFiles(): string[] {
+  try {
+    const stored = JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]");
+    return Array.isArray(stored) ? stored.filter((p) => typeof p === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function baseName(path: string) {
+  return path.split(/[/\\]/).pop() ?? path;
+}
+
 function App() {
   const [source, setSource] = useState(initialSource);
+  const [savedSource, setSavedSource] = useState(initialSource);
+  const [filePath, setFilePath] = useState<string | null>(null);
+  const [recentFiles, setRecentFiles] = useState<string[]>(loadRecentFiles);
+  const [recentOpen, setRecentOpen] = useState(false);
   const [isDark, setIsDark] = useState(prefersDark.matches);
+
+  const dirty = source !== savedSource;
+  const fileName = filePath ? baseName(filePath) : "Untitled";
+
+  // Latest state for the stable window/keyboard listeners registered once below
+  const stateRef = useRef({ source, filePath, dirty });
+  useEffect(() => {
+    stateRef.current = { source, filePath, dirty };
+  });
 
   useEffect(() => {
     const onChange = (e: MediaQueryListEvent) => setIsDark(e.matches);
@@ -31,10 +68,171 @@ function App() {
     return () => prefersDark.removeEventListener("change", onChange);
   }, []);
 
+  const updateRecentFiles = useCallback((update: (prev: string[]) => string[]) => {
+    setRecentFiles((prev) => {
+      const next = update(prev);
+      localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  const addRecentFile = useCallback(
+    (path: string) => {
+      updateRecentFiles((prev) => [path, ...prev.filter((p) => p !== path)].slice(0, MAX_RECENT));
+    },
+    [updateRecentFiles],
+  );
+
+  const confirmDiscard = useCallback(async () => {
+    if (!stateRef.current.dirty) return true;
+    return ask("You have unsaved changes that will be lost.", {
+      title: "Discard changes?",
+      kind: "warning",
+      okLabel: "Discard",
+      cancelLabel: "Cancel",
+    });
+  }, []);
+
+  const openFile = useCallback(
+    async (path?: string) => {
+      if (!isTauri) {
+        window.alert("File open/save needs the desktop app — run `npm run tauri dev`.");
+        return;
+      }
+      setRecentOpen(false);
+      if (!(await confirmDiscard())) return;
+      const target =
+        path ?? (await openDialog({ multiple: false, directory: false, filters: markdownFilters }));
+      if (!target) return;
+      try {
+        const text = await readTextFile(target);
+        setSource(text);
+        setSavedSource(text);
+        setFilePath(target);
+        addRecentFile(target);
+      } catch (err) {
+        updateRecentFiles((prev) => prev.filter((p) => p !== target));
+        await message(`Could not open ${target}:\n${err}`, { title: "Open failed", kind: "error" });
+      }
+    },
+    [addRecentFile, confirmDiscard, updateRecentFiles],
+  );
+
+  const saveFileAs = useCallback(async () => {
+    if (!isTauri) {
+      window.alert("File open/save needs the desktop app — run `npm run tauri dev`.");
+      return false;
+    }
+    const target = await saveDialog({
+      defaultPath: stateRef.current.filePath ?? "Untitled.md",
+      filters: markdownFilters,
+    });
+    if (!target) return false;
+    try {
+      await writeTextFile(target, stateRef.current.source);
+      setSavedSource(stateRef.current.source);
+      setFilePath(target);
+      addRecentFile(target);
+      return true;
+    } catch (err) {
+      await message(`Could not save ${target}:\n${err}`, { title: "Save failed", kind: "error" });
+      return false;
+    }
+  }, [addRecentFile]);
+
+  const saveFile = useCallback(async () => {
+    const { filePath: path, source: text } = stateRef.current;
+    if (!path) return saveFileAs();
+    try {
+      await writeTextFile(path, text);
+      setSavedSource(text);
+      return true;
+    } catch (err) {
+      await message(`Could not save ${path}:\n${err}`, { title: "Save failed", kind: "error" });
+      return false;
+    }
+  }, [saveFileAs]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
+      const key = e.key.toLowerCase();
+      if (key === "o") {
+        e.preventDefault();
+        void openFile();
+      } else if (key === "s") {
+        e.preventDefault();
+        void (e.shiftKey ? saveFileAs() : saveFile());
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [openFile, saveFile, saveFileAs]);
+
+  useEffect(() => {
+    if (!isTauri) return;
+    void getCurrentWindow().setTitle(`${dirty ? "• " : ""}${fileName} — HIKMA`);
+  }, [dirty, fileName]);
+
+  useEffect(() => {
+    if (!isTauri) return;
+    const win = getCurrentWindow();
+    const unlisten = win.onCloseRequested(async (event) => {
+      if (!stateRef.current.dirty) return;
+      event.preventDefault();
+      const discard = await ask(`${baseName(stateRef.current.filePath ?? "Untitled")} has unsaved changes. Close without saving?`, {
+        title: "Unsaved changes",
+        kind: "warning",
+        okLabel: "Discard & Close",
+        cancelLabel: "Cancel",
+      });
+      if (discard) await win.destroy();
+    });
+    return () => {
+      void unlisten.then((fn) => fn());
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!recentOpen) return;
+    const onClick = () => setRecentOpen(false);
+    window.addEventListener("click", onClick);
+    return () => window.removeEventListener("click", onClick);
+  }, [recentOpen]);
+
   return (
     <div className="app">
       <header className="toolbar">
         <span className="toolbar-brand">HIKMA <span className="toolbar-brand-ar">حكمة</span></span>
+        <span className="toolbar-file" title={filePath ?? undefined}>
+          {fileName}
+          {dirty && <span className="toolbar-dirty">●</span>}
+        </span>
+        <div className="toolbar-actions">
+          <button className="toolbar-btn" onClick={() => void openFile()}>Open</button>
+          <div className="toolbar-recent" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="toolbar-btn"
+              disabled={recentFiles.length === 0}
+              onClick={() => setRecentOpen((open) => !open)}
+            >
+              Recent ▾
+            </button>
+            {recentOpen && (
+              <ul className="toolbar-recent-menu">
+                {recentFiles.map((path) => (
+                  <li key={path}>
+                    <button title={path} onClick={() => void openFile(path)}>
+                      {baseName(path)}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <button className="toolbar-btn" onClick={() => void saveFile()}>Save</button>
+          <button className="toolbar-btn" onClick={() => void saveFileAs()}>Save As</button>
+        </div>
         <span className="toolbar-mode">Markdown</span>
       </header>
       <main className="editor">
