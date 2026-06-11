@@ -212,14 +212,16 @@ function App() {
           <button className="toolbar-btn" onClick={() => void openFile()}>Open</button>
           <div className="toolbar-recent" onClick={(e) => e.stopPropagation()}>
             <button
+              type="button"
               className="toolbar-btn"
+              aria-haspopup="menu"
+              aria-expanded={recentOpen}
+              aria-controls="recent-menu"
               disabled={recentFiles.length === 0}
               onClick={() => setRecentOpen((open) => !open)}
             >
-              Recent ▾
-            </button>
             {recentOpen && (
-              <ul className="toolbar-recent-menu">
+              <ul id="recent-menu" role="menu" className="toolbar-recent-menu">
                 {recentFiles.map((path) => (
                   <li key={path}>
                     <button title={path} onClick={() => void openFile(path)}>
