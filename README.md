@@ -32,6 +32,27 @@ git clone https://github.com/HashDBrown/HIKMA
 cd hikma
 ```
 
+Running the program
+
+To run this project, you will need to have Rust (https://www.rust-lang.org/tools/install)  installed, as HIKMA is built with Tauri (https://tauri.app/).
+
+1. Install Dependencies 
+```bash
+npm install
+```
+
+Run the application
+```bash
+ npm run tauri dev
+```
+
+Other Scripts
+```bash
+   - npm run dev: Runs only the web-based frontend in your browser.
+   - npm run build: Builds the project for production.
+   - npm run lint: Runs the linter to check for code quality issues.
+```
+
 ---
 
 ## License
