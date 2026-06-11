@@ -1,12 +1,14 @@
 import { useEffect, useRef } from "react";
 import { Crepe } from "@milkdown/crepe";
 import { Milkdown, MilkdownProvider, useEditor } from "@milkdown/react";
-import { replaceAll } from "@milkdown/kit/utils"; // ← Updated to the v7 kit package!
+import { replaceAll } from "@milkdown/kit/utils";
 
-// Import base styles first
-import '@milkdown/crepe/theme/common/style.css'
-// Then import your chosen theme
-import '@milkdown/crepe/theme/frame-dark.css'
+// 1. Base prose styles
+import '@milkdown/crepe/theme/common/style.css';
+// 2. THE MISSING PIECE: UI Structure (menus, toolbars, handles)
+import '@milkdown/crepe/theme/frame.css'; 
+// 3. Your custom colors
+import './crepe-dark.css';
 
 interface MilkdownEditorProps {
   markdown: string;
@@ -41,7 +43,7 @@ function Editor({ markdown, onChange }: MilkdownEditorProps) {
 
   return (
     <div
-      style={{ width: "100%", height: "100%" }}
+      className="milkdown-host"
       onFocusCapture={() => (focused.current = true)}
       onBlurCapture={() => (focused.current = false)}
     >
