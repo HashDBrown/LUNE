@@ -221,7 +221,7 @@ function App() {
               onClick={() => setRecentOpen((open) => !open)}
             >
             {recentOpen && (
-              <ul className="toolbar-recent-menu">
+              <ul id="recent-menu" role="menu" className="toolbar-recent-menu">
                 {recentFiles.map((path) => (
                   <li key={path}>
                     <button title={path} onClick={() => void openFile(path)}>
