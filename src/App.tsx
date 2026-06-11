@@ -220,6 +220,8 @@ function App() {
               disabled={recentFiles.length === 0}
               onClick={() => setRecentOpen((open) => !open)}
             >
+              Recent ▾
+            </button>
             {recentOpen && (
               <ul id="recent-menu" role="menu" className="toolbar-recent-menu">
                 {recentFiles.map((path) => (
