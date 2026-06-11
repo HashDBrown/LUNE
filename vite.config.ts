@@ -4,6 +4,11 @@ import tailwindcss from "@tailwindcss/vite";
 
 // @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
+// @ts-expect-error process is a nodejs global
+const isTauriDev = !!process.env.TAURI_ENV_PLATFORM;
+// open the standalone dev server in Firefox (`tauri dev` uses its own native window)
+// @ts-expect-error process is a nodejs global
+if (!isTauriDev && !process.env.BROWSER) process.env.BROWSER = "firefox";
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({
@@ -17,6 +22,7 @@ export default defineConfig(async () => ({
   server: {
     port: 1420,
     strictPort: true,
+    open: !isTauriDev,
     host: host || false,
     hmr: host
       ? {
