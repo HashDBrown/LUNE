@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { markdown } from "@codemirror/lang-markdown";
 import { languages } from "@codemirror/language-data";
+import { gutters } from "@codemirror/view";
 import { MilkdownEditor } from "./MilkdownEditor";
 import "./App.css";
 
@@ -44,7 +45,7 @@ function App() {
             height="100%"
             theme={isDark ? "dark" : "light"}
             basicSetup={{ lineNumbers: true, foldGutter: false }}
-            extensions={[markdown({ codeLanguages: languages })]}
+            extensions={[markdown({ codeLanguages: languages }), gutters({ fixed: false })]}
             onChange={(value) => setSource(value)}
           />
           <div className="editor-preview min-h-0 overflow-auto border-l border-gray-300 dark:border-gray-600">
