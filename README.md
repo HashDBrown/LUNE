@@ -36,12 +36,12 @@ Running the program
 
 To run this project, you will need to have Rust (https://www.rust-lang.org/tools/install)  installed, as HIKMA is built with Tauri (https://tauri.app/).
 
-1. Install Dependencies 
+Install Dependencies 
 ```bash
 npm install
 ```
 
-Run the application
+Run the Application
 ```bash
  npm run tauri dev
 ```
