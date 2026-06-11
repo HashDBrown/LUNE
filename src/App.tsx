@@ -2,11 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { markdown } from "@codemirror/lang-markdown";
 import { languages } from "@codemirror/language-data";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { ask, message, open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { gutters } from "@codemirror/view";
+import { MilkdownEditor } from "./MilkdownEditor";
 import "./App.css";
 
 const initialSource = `# Welcome to HIKMA حكمة
@@ -235,20 +235,22 @@ function App() {
         </div>
         <span className="toolbar-mode">Markdown</span>
       </header>
-      <main className="editor">
-      <CodeMirror
-        className="editor-source"
-        value={source}
-        height="100%"
-        theme={isDark ? "dark" : "light"}
-        basicSetup={{ lineNumbers: true, foldGutter: false }}
-        extensions={[markdown({ codeLanguages: languages })]}
-        onChange={(value) => setSource(value)}
-      />
-      <div className="editor-preview">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{source}</ReactMarkdown>
-      </div>
-    </main>
+      <main className="editor grow min-h-0">
+        <div className="editor-whole grid h-full grid-rows-2 md:grid-cols-2 md:grid-rows-1 border-gray-300 dark:border-gray-600">
+          <CodeMirror
+            className="editor-source min-h-0 overflow-auto"
+            value={source}
+            height="100%"
+            theme={isDark ? "dark" : "light"}
+            basicSetup={{ lineNumbers: true, foldGutter: false }}
+            extensions={[markdown({ codeLanguages: languages }), gutters({ fixed: false })]}
+            onChange={(value) => setSource(value)}
+          />
+          <div className="editor-preview min-h-0 overflow-auto border-l border-gray-300 dark:border-gray-600">
+            <MilkdownEditor markdown={source} onChange={setSource} />
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
