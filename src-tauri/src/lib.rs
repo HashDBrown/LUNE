@@ -62,7 +62,13 @@ pub fn run() {
                     &MenuItem::with_id(app, "open", "Open...", true, Some("CmdOrCtrl+O"))?,
                     &PredefinedMenuItem::separator(app)?,
                     &MenuItem::with_id(app, "save", "Save", true, Some("CmdOrCtrl+S"))?,
-                    &MenuItem::with_id(app, "save_as", "Save As...", true, Some("CmdOrCtrl+Shift+S"))?,
+                    &MenuItem::with_id(
+                        app,
+                        "save_as",
+                        "Save As...",
+                        true,
+                        Some("CmdOrCtrl+Shift+S"),
+                    )?,
                     &PredefinedMenuItem::separator(app)?,
                     &PredefinedMenuItem::close_window(app, None)?,
                 ],
@@ -90,13 +96,49 @@ pub fn run() {
                 "Insert",
                 true,
                 &[
-                    &MenuItem::with_id(app, "insert-code", "Code Block", true, Some("CmdOrCtrl+Alt+C"))?,
-                    &MenuItem::with_id(app, "insert-table", "Table", true, Some("CmdOrCtrl+Alt+T"))?,
-                    &MenuItem::with_id(app, "insert-image", "Image", true, Some("CmdOrCtrl+Alt+I"))?,
+                    &MenuItem::with_id(
+                        app,
+                        "insert-code",
+                        "Code Block",
+                        true,
+                        Some("CmdOrCtrl+Alt+C"),
+                    )?,
+                    &MenuItem::with_id(
+                        app,
+                        "insert-table",
+                        "Table",
+                        true,
+                        Some("CmdOrCtrl+Alt+T"),
+                    )?,
+                    &MenuItem::with_id(
+                        app,
+                        "insert-image",
+                        "Image",
+                        true,
+                        Some("CmdOrCtrl+Alt+I"),
+                    )?,
                     &MenuItem::with_id(app, "insert-link", "Link", true, Some("CmdOrCtrl+Alt+L"))?,
-                    &MenuItem::with_id(app, "insert-rule", "Horizontal Rule", true, Some("CmdOrCtrl+Alt+H"))?,
-                    &MenuItem::with_id(app, "insert-task", "Task List", true, Some("CmdOrCtrl+Alt+X"))?,
-                    &MenuItem::with_id(app, "insert-quote", "Blockquote", true, Some("CmdOrCtrl+Alt+Q"))?,
+                    &MenuItem::with_id(
+                        app,
+                        "insert-rule",
+                        "Horizontal Rule",
+                        true,
+                        Some("CmdOrCtrl+Alt+H"),
+                    )?,
+                    &MenuItem::with_id(
+                        app,
+                        "insert-task",
+                        "Task List",
+                        true,
+                        Some("CmdOrCtrl+Alt+X"),
+                    )?,
+                    &MenuItem::with_id(
+                        app,
+                        "insert-quote",
+                        "Blockquote",
+                        true,
+                        Some("CmdOrCtrl+Alt+Q"),
+                    )?,
                 ],
             )?;
 
@@ -124,7 +166,13 @@ pub fn run() {
                     &PredefinedMenuItem::separator(app)?,
                     &theme_menu,
                     &PredefinedMenuItem::separator(app)?,
-                    &MenuItem::with_id(app, "toggle_devtools", "Toggle Developer Tools", true, Some("CmdOrCtrl+Shift+I"))?,
+                    &MenuItem::with_id(
+                        app,
+                        "toggle_devtools",
+                        "Toggle Developer Tools",
+                        true,
+                        Some("CmdOrCtrl+Shift+I"),
+                    )?,
                 ],
             )?;
 
@@ -169,73 +217,71 @@ pub fn run() {
 
             app.set_menu(menu)?;
 
-            app.on_menu_event(move |app, event| {
-                match event.id.as_ref() {
-                    "new" => {
-                        let _ = app.emit("menu-new", ());
-                    }
-                    "open" => {
-                        let _ = app.emit("menu-open", ());
-                    }
-                    "save" => {
-                        let _ = app.emit("menu-save", ());
-                    }
-                    "save_as" => {
-                        let _ = app.emit("menu-save-as", ());
-                    }
-                    "reload" => {
-                        let _ = app.get_webview_window("main").map(|w| w.reload());
-                    }
-                    "toggle_devtools" => {
-                        if let Some(window) = app.get_webview_window("main") {
-                            if window.is_devtools_open() {
-                                window.close_devtools();
-                            } else {
-                                window.open_devtools();
-                            }
+            app.on_menu_event(move |app, event| match event.id.as_ref() {
+                "new" => {
+                    let _ = app.emit("menu-new", ());
+                }
+                "open" => {
+                    let _ = app.emit("menu-open", ());
+                }
+                "save" => {
+                    let _ = app.emit("menu-save", ());
+                }
+                "save_as" => {
+                    let _ = app.emit("menu-save-as", ());
+                }
+                "reload" => {
+                    let _ = app.get_webview_window("main").map(|w| w.reload());
+                }
+                "toggle_devtools" => {
+                    if let Some(window) = app.get_webview_window("main") {
+                        if window.is_devtools_open() {
+                            window.close_devtools();
+                        } else {
+                            window.open_devtools();
                         }
                     }
-                    "learn_more" => {
-                        let _ = app.emit("menu-learn-more", ());
-                    }
-                    "github" => {
-                        let _ = app.emit("menu-github", ());
-                    }
-                    "report_issue" => {
-                        let _ = app.emit("menu-report-issue", ());
-                    }
-                    "insert-code" => {
-                        let _ = app.emit("menu-insert", "code");
-                    }
-                    "insert-table" => {
-                        let _ = app.emit("menu-insert", "table");
-                    }
-                    "insert-image" => {
-                        let _ = app.emit("menu-insert", "image");
-                    }
-                    "insert-link" => {
-                        let _ = app.emit("menu-insert", "link");
-                    }
-                    "insert-rule" => {
-                        let _ = app.emit("menu-insert", "rule");
-                    }
-                    "insert-task" => {
-                        let _ = app.emit("menu-insert", "task");
-                    }
-                    "insert-quote" => {
-                        let _ = app.emit("menu-insert", "quote");
-                    }
-                    "theme-light" => {
-                        let _ = app.emit("menu-theme", "light");
-                    }
-                    "theme-dark" => {
-                        let _ = app.emit("menu-theme", "dark");
-                    }
-                    "theme-system" => {
-                        let _ = app.emit("menu-theme", "system");
-                    }
-                    _ => {}
                 }
+                "learn_more" => {
+                    let _ = app.emit("menu-learn-more", ());
+                }
+                "github" => {
+                    let _ = app.emit("menu-github", ());
+                }
+                "report_issue" => {
+                    let _ = app.emit("menu-report-issue", ());
+                }
+                "insert-code" => {
+                    let _ = app.emit("menu-insert", "code");
+                }
+                "insert-table" => {
+                    let _ = app.emit("menu-insert", "table");
+                }
+                "insert-image" => {
+                    let _ = app.emit("menu-insert", "image");
+                }
+                "insert-link" => {
+                    let _ = app.emit("menu-insert", "link");
+                }
+                "insert-rule" => {
+                    let _ = app.emit("menu-insert", "rule");
+                }
+                "insert-task" => {
+                    let _ = app.emit("menu-insert", "task");
+                }
+                "insert-quote" => {
+                    let _ = app.emit("menu-insert", "quote");
+                }
+                "theme-light" => {
+                    let _ = app.emit("menu-theme", "light");
+                }
+                "theme-dark" => {
+                    let _ = app.emit("menu-theme", "dark");
+                }
+                "theme-system" => {
+                    let _ = app.emit("menu-theme", "system");
+                }
+                _ => {}
             });
 
             Ok(())
