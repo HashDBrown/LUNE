@@ -1,31 +1,54 @@
-.milkdown {
-  --crepe-color-background: #1f1b16;
-  --crepe-color-on-background: #eae1d9;
-  --crepe-color-surface: #18120b;
-  --crepe-color-surface-low: #201b13;
-  --crepe-color-on-surface: #ede0d4;
-  --crepe-color-on-surface-variant: #d3c4b4;
-  --crepe-color-outline: #9c8f80;
-  --crepe-color-primary: #f4bd6f;
-  --crepe-color-secondary: #56442a;
-  --crepe-color-on-secondary: #fbdebc;
-  --crepe-color-inverse: #ede0d4;
-  --crepe-color-on-inverse: #362f27;
-  --crepe-color-inline-code: #ffb4ab;
-  --crepe-color-error: #ffb4ab;
-  --crepe-color-hover: #251f17;
-  --crepe-color-selected: #3b342b;
-  --crepe-color-inline-area: #3f3830;
+/* HIKMA dark theme for Crepe — navy palette
+   Consumes :root vars from App.css:
+   --navy-rich --navy-oxford --navy-blue --navy-slate --navy-platinum */
+@media (prefers-color-scheme: dark) {
+  .milkdown {
+    /* Page + ink: rich black paper, platinum text */
+    --crepe-color-background: var(--navy-rich);
+    --crepe-color-on-background: var(--navy-platinum);
 
-  --crepe-font-title: Georgia, Cambria, 'Times New Roman', Times, serif;
-  --crepe-font-default: 'Open Sans', Arial, Helvetica, sans-serif;
-  --crepe-font-code:
-    Fira Code, Menlo, Monaco, 'Courier New', Courier, monospace;
+    /* Surfaces: a step darker than the page, then oxford */
+    --crepe-color-surface: #0b1622;
+    --crepe-color-surface-low: var(--navy-oxford);
+    --crepe-color-on-surface: var(--navy-platinum);
+    --crepe-color-on-surface-variant: #aab7c4;
 
-  --crepe-shadow-1:
-    0px 1px 2px 0px rgba(255, 255, 255, 0.3),
-    0px 1px 3px 1px rgba(255, 255, 255, 0.15);
-  --crepe-shadow-2:
-    0px 1px 2px 0px rgba(255, 255, 255, 0.3),
-    0px 2px 6px 2px rgba(255, 255, 255, 0.15);
+    /* Outline: slate so borders read without glowing */
+    --crepe-color-outline: var(--navy-slate);
+
+    /* Primary: slate — links, accents, active controls (~5:1 on rich black) */
+    --crepe-color-primary: var(--navy-slate);
+
+    /* Secondary: lifted oxford for chips/highlights */
+    --crepe-color-secondary: #2a3b57;
+    --crepe-color-on-secondary: #d6e0ec;
+
+    /* Inverse: platinum chips with oxford text */
+    --crepe-color-inverse: var(--navy-platinum);
+    --crepe-color-on-inverse: var(--navy-oxford);
+
+    /* Inline code: lightened slate, distinct from body text */
+    --crepe-color-inline-code: #9fb4cc;
+
+    /* Error stays semantic red (dark-mode variant) */
+    --crepe-color-error: #ffb4ab;
+
+    /* Interaction fills: rich -> oxford ladder */
+    --crepe-color-hover: #142233;
+    --crepe-color-selected: #25364f;
+    --crepe-color-inline-area: var(--navy-oxford);
+
+    --crepe-font-title: Georgia, Cambria, 'Times New Roman', Times, serif;
+    --crepe-font-default: 'Open Sans', Arial, Helvetica, sans-serif;
+    --crepe-font-code:
+      Fira Code, Menlo, Monaco, 'Courier New', Courier, monospace;
+
+    /* Platinum-tinted shadows instead of pure white */
+    --crepe-shadow-1:
+      0px 1px 2px 0px rgba(224, 225, 221, 0.25),
+      0px 1px 3px 1px rgba(224, 225, 221, 0.12);
+    --crepe-shadow-2:
+      0px 1px 2px 0px rgba(224, 225, 221, 0.25),
+      0px 2px 6px 2px rgba(224, 225, 221, 0.12);
+  }
 }

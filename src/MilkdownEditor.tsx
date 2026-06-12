@@ -7,8 +7,9 @@ import { replaceAll } from "@milkdown/kit/utils";
 import '@milkdown/crepe/theme/common/style.css';
 // 2. THE MISSING PIECE: UI Structure (menus, toolbars, handles)
 import '@milkdown/crepe/theme/frame.css'; 
-// 3. Your custom colors
+// 3. Your custom colors (system dark/light mode is auto-selected via prefers-color-scheme)
 import './crepe-dark.css';
+import './crepe-light.css';
 
 interface MilkdownEditorProps {
   markdown: string;

@@ -1,18 +1,79 @@
 @import "tailwindcss";
 
 :root {
+  /* HIKMA green palette (light mode) */
+  --hikma-sand:   #DAD7CD;
+  --hikma-sage:   #A3B18A;
+  --hikma-green:  #588157;
+  --hikma-forest: #3A5A40;
+  --hikma-pine:   #344E41;
+  --hikma-teal:   #52796F;
+
+  /* HIKMA navy palette (dark mode) */
+  --navy-rich:     #0D1B2A;
+  --navy-oxford:   #1B263B;
+  --navy-blue:     #415A77;
+  --navy-slate:    #778DA9;
+  --navy-platinum: #E0E1DD;
+
+  /* ── Theme tokens: DARK defaults (navy) ── */
+  --app-bg: var(--navy-rich);
+  --app-fg: var(--navy-platinum);
+
+  --toolbar-bg: var(--navy-oxford);
+  --toolbar-border: var(--navy-blue);
+  --brand-fg: var(--navy-platinum);
+  --brand-ar-fg: var(--navy-slate);
+  --toolbar-muted: #9aa7b5;          /* file name */
+  --toolbar-accent: var(--navy-slate); /* dirty dot */
+
+  --toolbar-btn-bg: #233247;
+  --toolbar-btn-border: var(--navy-blue);
+  --toolbar-btn-fg: #c5cdd6;
+  --toolbar-btn-hover-bg: #2c3e5c;
+  --toolbar-btn-hover-fg: var(--navy-platinum);
+
+  --toolbar-menu-bg: #16243a;
+  --toolbar-menu-shadow: rgba(0, 0, 0, 0.5);
+
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
   font-size: 16px;
   line-height: 24px;
   font-weight: 400;
-  color: #0f0f0f;
-  background-color: #f6f6f6;
+  color: var(--app-fg);
+  background-color: var(--app-bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
 }
+
+/* ── Theme tokens: LIGHT overrides (green) ── */
+@media (prefers-color-scheme: light) {
+  :root {
+    --app-bg: white;               /* lightened sand */
+    --app-fg: #1d2a22;
+
+    --toolbar-bg: var(--hikma-forest);
+    --toolbar-border: var(--hikma-pine);
+    --brand-fg: var(--hikma-sand);
+    --brand-ar-fg: var(--hikma-sage);
+    --toolbar-muted: #c4cfc0;
+    --toolbar-accent: var(--hikma-sand);
+
+    --toolbar-btn-bg: var(--hikma-pine);
+    --toolbar-btn-border: #2b4036;
+    --toolbar-btn-fg: var(--hikma-sand);
+    --toolbar-btn-hover-bg: var(--hikma-green);
+    --toolbar-btn-hover-fg: #ffffff;
+
+    --toolbar-menu-bg: var(--hikma-pine);
+    --toolbar-menu-shadow: rgba(29, 42, 34, 0.35);
+    
+  }
+}
+
 
 * {
   box-sizing: border-box;
@@ -42,8 +103,8 @@ body,
   align-items: center;
   gap: 0.75rem;
   padding: 0 1rem;
-  background: #13131f;
-  border-bottom: 1px solid #2a2a3e;
+  background: var(--toolbar-bg);
+  border-bottom: 1px solid var(--toolbar-border);
   flex-shrink: 0;
 }
 
@@ -51,17 +112,17 @@ body,
   font-size: 0.85rem;
   font-weight: 600;
   letter-spacing: 0.1em;
-  color: #c9a84c;
+  color: var(--brand-fg);
 }
 
 .toolbar-brand-ar {
   font-weight: 400;
-  color: #8a6f30;
+  color: var(--brand-ar-fg);
 }
 
 .toolbar-file {
   font-size: 0.75rem;
-  color: #aaa;
+  color: var(--toolbar-muted);
   min-width: 0;
   display: flex;
   align-items: center;
@@ -72,7 +133,7 @@ body,
 }
 
 .toolbar-dirty {
-  color: #c9a84c;
+  color: var(--toolbar-accent);
   font-size: 0.6rem;
   line-height: 1;
 }
@@ -88,17 +149,17 @@ body,
   font: inherit;
   font-size: 0.7rem;
   letter-spacing: 0.04em;
-  color: #ccc;
-  background: #222236;
-  border: 1px solid #2a2a3e;
+  color: var(--toolbar-btn-fg);
+  background: var(--toolbar-btn-bg);
+  border: 1px solid var(--toolbar-btn-border);
   border-radius: 4px;
   padding: 2px 8px;
   cursor: pointer;
 }
 
 .toolbar-btn:hover:not(:disabled) {
-  background: #2e2e4a;
-  color: #fff;
+  background: var(--toolbar-btn-hover-bg);
+  color: var(--toolbar-btn-hover-fg);
 }
 
 .toolbar-btn:disabled {
@@ -118,11 +179,11 @@ body,
   min-width: 180px;
   max-width: 320px;
   list-style: none;
-  background: #1b1b2c;
-  border: 1px solid #2a2a3e;
+  background: var(--toolbar-menu-bg);
+  border: 1px solid var(--toolbar-btn-border);
   border-radius: 6px;
   padding: 4px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 18px var(--toolbar-menu-shadow);
 }
 
 .toolbar-recent-menu button {
@@ -131,7 +192,7 @@ body,
   display: block;
   width: 100%;
   text-align: left;
-  color: #ccc;
+  color: var(--toolbar-btn-fg);
   background: none;
   border: none;
   border-radius: 4px;
@@ -143,14 +204,14 @@ body,
 }
 
 .toolbar-recent-menu button:hover {
-  background: #2e2e4a;
-  color: #fff;
+  background: var(--toolbar-btn-hover-bg);
+  color: var(--toolbar-btn-hover-fg);
 }
 
 .toolbar-mode {
   font-size: 0.7rem;
-  color: #888;
-  background: #222236;
+  color: var(--toolbar-btn-fg);
+  background: var(--toolbar-btn-bg);
   padding: 2px 8px;
   border-radius: 4px;
   letter-spacing: 0.04em;
@@ -165,18 +226,14 @@ body,
 
 .editor-source,
 .editor-preview {
-  /* padding-top: 40px !important;  <- remove this */
   min-width: 0;
   min-height: 0;
   overflow: auto;
 }
 
-.editor-source {
-  border-right: 5px solid #3a3a5c;
-}
-
 .editor-source .cm-editor {
   height: 100%;
+  
 }
 
 .editor-source .cm-scroller {
@@ -191,8 +248,13 @@ body,
   padding: 1.25em;
 }
 
-.editor-preview {
-  background: #1f1b16;
+
+.editor-source .cm-editor,
+.editor-source .cm-gutters {
+  background: var(--app-bg) !important;
 }
 
-
+.milkdown .cm-activeLineGutter {
+  background-color: var(--crepe-color-selected);
+  color: var(--crepe-color-on-background);
+}
