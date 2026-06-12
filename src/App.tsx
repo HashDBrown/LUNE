@@ -53,7 +53,7 @@ function App() {
   const [recentFiles, setRecentFiles] = useState<string[]>(loadRecentFiles);
   const [recentOpen, setRecentOpen] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
-  const [isDark, setIsDark] = useState(prefersDark.matches);
+  const [systemPrefersDark, setSystemPrefersDark] = useState(prefersDark.matches);
 
   const editorViewRef = useRef<EditorView | null>(null);
 
@@ -67,22 +67,12 @@ function App() {
   });
 
   useEffect(() => {
-    const onChange = (e: MediaQueryListEvent) => {
-      if (theme === "system") {
-        setIsDark(e.matches);
-      }
-    };
+    const onChange = (e: MediaQueryListEvent) => setSystemPrefersDark(e.matches);
     prefersDark.addEventListener("change", onChange);
     return () => prefersDark.removeEventListener("change", onChange);
-  }, [theme]);
+  }, []);
 
-  useEffect(() => {
-    if (theme === "system") {
-      setIsDark(prefersDark.matches);
-    } else {
-      setIsDark(theme === "dark");
-    }
-  }, [theme]);
+  const isDark = theme === "system" ? systemPrefersDark : theme === "dark";
 
   const updateRecentFiles = useCallback((update: (prev: string[]) => string[]) => {
     setRecentFiles((prev) => {
@@ -241,7 +231,7 @@ function App() {
     return () => {
       void Promise.all(unlistens).then((fns) => fns.forEach((fn) => fn()));
     };
-  }, [newFile, openFile, saveFile, saveFileAs]);
+  }, [insertText, newFile, openFile, saveFile, saveFileAs]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
