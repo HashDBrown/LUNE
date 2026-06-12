@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import CodeMirror from "@uiw/react-codemirror";
+import CodeMirror, { EditorView } from "@uiw/react-codemirror";
 import { markdown } from "@codemirror/lang-markdown";
 import { languages } from "@codemirror/language-data";
 import { ask, message, open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { listen } from "@tauri-apps/api/event";
 import { gutters } from "@codemirror/view";
 import { MilkdownEditor } from "./MilkdownEditor";
 import "./App.css";
@@ -51,7 +52,10 @@ function App() {
   const [filePath, setFilePath] = useState<string | null>(null);
   const [recentFiles, setRecentFiles] = useState<string[]>(loadRecentFiles);
   const [recentOpen, setRecentOpen] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
   const [isDark, setIsDark] = useState(prefersDark.matches);
+
+  const editorViewRef = useRef<EditorView | null>(null);
 
   const dirty = source !== savedSource;
   const fileName = filePath ? baseName(filePath) : "Untitled";
@@ -63,10 +67,22 @@ function App() {
   });
 
   useEffect(() => {
-    const onChange = (e: MediaQueryListEvent) => setIsDark(e.matches);
+    const onChange = (e: MediaQueryListEvent) => {
+      if (theme === "system") {
+        setIsDark(e.matches);
+      }
+    };
     prefersDark.addEventListener("change", onChange);
     return () => prefersDark.removeEventListener("change", onChange);
-  }, []);
+  }, [theme]);
+
+  useEffect(() => {
+    if (theme === "system") {
+      setIsDark(prefersDark.matches);
+    } else {
+      setIsDark(theme === "dark");
+    }
+  }, [theme]);
 
   const updateRecentFiles = useCallback((update: (prev: string[]) => string[]) => {
     setRecentFiles((prev) => {
@@ -118,6 +134,13 @@ function App() {
     [addRecentFile, confirmDiscard, updateRecentFiles],
   );
 
+  const newFile = useCallback(async () => {
+    if (!(await confirmDiscard())) return;
+    setSource(initialSource);
+    setSavedSource(initialSource);
+    setFilePath(null);
+  }, [confirmDiscard]);
+
   const saveFileAs = useCallback(async () => {
     if (!isTauri) {
       window.alert("File open/save needs the desktop app — run `npm run tauri dev`.");
@@ -152,6 +175,73 @@ function App() {
       return false;
     }
   }, [saveFileAs]);
+
+  const insertText = useCallback((type: string) => {
+    if (!editorViewRef.current) return;
+
+    let snippet = "";
+    switch (type) {
+      case "code":
+        snippet = "\n```js\n// Code block\n\n```\n";
+        break;
+      case "table":
+        snippet = "\n| Header | Header |\n| ------ | ------ |\n| Cell   | Cell   |\n";
+        break;
+      case "image":
+        snippet = "![Alt text](https://via.placeholder.com/150)";
+        break;
+      case "link":
+        snippet = "[Link text](https://example.com)";
+        break;
+      case "rule":
+        snippet = "\n---\n";
+        break;
+      case "task":
+        snippet = "\n- [ ] New task\n";
+        break;
+      case "quote":
+        snippet = "\n> Blockquote\n";
+        break;
+    }
+
+    const { state, dispatch } = editorViewRef.current;
+    const { from, to } = state.selection.main;
+    dispatch({
+      changes: { from, to, insert: snippet },
+      selection: { anchor: from + snippet.length },
+      scrollIntoView: true,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!isTauri) return;
+
+    const unlistens = [
+      listen("menu-new", () => void newFile()),
+      listen("menu-open", () => void openFile()),
+      listen("menu-save", () => void saveFile()),
+      listen("menu-save-as", () => void saveFileAs()),
+      listen("menu-theme", (event) => {
+        setTheme(event.payload as "light" | "dark" | "system");
+      }),
+      listen("menu-insert", (event) => {
+        insertText(event.payload as string);
+      }),
+      listen("menu-learn-more", () => {
+        window.open("https://github.com/HashDBrown/HIKMA", "_blank");
+      }),
+      listen("menu-github", () => {
+        window.open("https://github.com/HashDBrown/HIKMA", "_blank");
+      }),
+      listen("menu-report-issue", () => {
+        window.open("https://github.com/HashDBrown/HIKMA/issues", "_blank");
+      }),
+    ];
+
+    return () => {
+      void Promise.all(unlistens).then((fns) => fns.forEach((fn) => fn()));
+    };
+  }, [newFile, openFile, saveFile, saveFileAs]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -249,6 +339,9 @@ function App() {
             basicSetup={{ lineNumbers: true, foldGutter: false }}
             extensions={[markdown({ codeLanguages: languages }), gutters({ fixed: false })]}
             onChange={(value) => setSource(value)}
+            onCreateEditor={(view) => {
+              editorViewRef.current = view;
+            }}
           />
           <div className="editor-preview min-h-0 overflow-auto border-l border-gray-300 dark:border-gray-600">
             <MilkdownEditor markdown={source} onChange={setSource} />
