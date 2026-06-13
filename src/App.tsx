@@ -233,7 +233,7 @@ function App() {
     return () => {
       void Promise.all(unlistens).then((fns) => fns.forEach((fn) => fn()));
     };
-  }, [newFile, openFile, saveFile, saveFileAs, insertText]);
+  }, [insertText, newFile, openFile, saveFile, saveFileAs]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
