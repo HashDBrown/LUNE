@@ -1,10 +1,108 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+use serde::Serialize;
+use std::fs;
+use std::path::Path;
 use tauri::menu::{AboutMetadata, Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::{Emitter, Manager};
 
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
+}
+
+// ── Workspace file tree ────────────────────────────────────────────────
+//
+// `read_dir_tree` walks a user-chosen folder and returns a nested structure.
+// It's a custom command, so it bypasses the fs-plugin scope in default.json
+// (no capability changes needed) — but it deliberately surfaces ONLY the
+// extensions HIKMA can actually open, so every click in the tree routes
+// cleanly through the existing scoped `openFile`/`readTextFile` path.
+//
+// To show *every* file instead: empty out EXTS (the extension filter is then
+// skipped) AND broaden `fs:allow-read-text-file` in default.json accordingly.
+
+#[derive(Serialize)]
+struct FileNode {
+    name: String,
+    path: String,
+    is_dir: bool,
+    children: Option<Vec<FileNode>>, // None = file, Some = directory
+}
+
+/// Folder names we never descend into.
+const IGNORE: &[&str] = &[".git", "node_modules", "target", ".DS_Store", ".obsidian"];
+/// File extensions surfaced in the tree. Empty this slice to show all files.
+/// The text formats are openable; the image formats are display-only — the
+/// frontend (FileTree.tsx) decides what's clickable, not this list.
+const EXTS: &[&str] = &[
+    "md", "markdown", "txt", // editable
+    "png", "jpg", "jpeg", "gif", "svg", "webp", // shown but inert
+];
+/// Safety cap so a pathological tree can't recurse forever.
+const MAX_DEPTH: usize = 12;
+
+fn read_node(path: &Path, depth: usize) -> Option<FileNode> {
+    let name = path
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_else(|| path.to_string_lossy().into_owned());
+
+    if depth > 0 && IGNORE.contains(&name.as_str()) {
+        return None;
+    }
+
+    if path.is_dir() {
+        let mut kids: Vec<FileNode> = if depth < MAX_DEPTH {
+            fs::read_dir(path)
+                .into_iter()
+                .flatten()
+                .filter_map(|e| e.ok())
+                .filter_map(|e| read_node(&e.path(), depth + 1))
+                .collect()
+        } else {
+            Vec::new()
+        };
+
+        // Directories first, then case-insensitive alphabetical.
+        kids.sort_by(|a, b| {
+            b.is_dir
+                .cmp(&a.is_dir)
+                .then(a.name.to_lowercase().cmp(&b.name.to_lowercase()))
+        });
+
+        // Prune folders that contain no editable files anywhere beneath —
+        // but never prune the root, so an empty folder still opens cleanly.
+        if depth > 0 && kids.is_empty() {
+            return None;
+        }
+
+        Some(FileNode {
+            name,
+            path: path.to_string_lossy().into_owned(),
+            is_dir: true,
+            children: Some(kids),
+        })
+    } else {
+        let keep = EXTS.is_empty()
+            || path
+                .extension()
+                .map(|e| EXTS.contains(&e.to_string_lossy().to_lowercase().as_str()))
+                .unwrap_or(false);
+        if !keep {
+            return None;
+        }
+        Some(FileNode {
+            name,
+            path: path.to_string_lossy().into_owned(),
+            is_dir: false,
+            children: None,
+        })
+    }
+}
+
+#[tauri::command]
+fn read_dir_tree(path: String) -> Result<FileNode, String> {
+    read_node(Path::new(&path), 0).ok_or_else(|| "could not read directory".to_string())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -60,6 +158,13 @@ pub fn run() {
                 &[
                     &MenuItem::with_id(app, "new", "New", true, Some("CmdOrCtrl+N"))?,
                     &MenuItem::with_id(app, "open", "Open...", true, Some("CmdOrCtrl+O"))?,
+                    &MenuItem::with_id(
+                        app,
+                        "open_folder",
+                        "Open Folder...",
+                        true,
+                        Some("CmdOrCtrl+Shift+O"),
+                    )?,
                     &PredefinedMenuItem::separator(app)?,
                     &MenuItem::with_id(app, "save", "Save", true, Some("CmdOrCtrl+S"))?,
                     &MenuItem::with_id(
@@ -224,6 +329,9 @@ pub fn run() {
                 "open" => {
                     let _ = app.emit("menu-open", ());
                 }
+                "open_folder" => {
+                    let _ = app.emit("menu-open-folder", ());
+                }
                 "save" => {
                     let _ = app.emit("menu-save", ());
                 }
@@ -286,7 +394,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![greet, read_dir_tree])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

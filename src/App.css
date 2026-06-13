@@ -38,6 +38,15 @@
 
   --scrollbar-thumb: rgba(120, 141, 169, 0.4);   /* navy-slate @ 40% */
 
+  /* Sidebar / file tree (dark) */
+  --sidebar-bg: var(--sensei-black);
+  --sidebar-border: var(--deep-onyx);
+  --sidebar-fg: #c5cdd6;
+  --sidebar-muted: #9aa7b5;
+  --sidebar-hover-bg: #1a2333;
+  --sidebar-active-bg: #233247;
+  --sidebar-active-fg: var(--navy-platinum);
+
 
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
   font-size: 16px;
@@ -75,6 +84,15 @@
     --toolbar-menu-shadow: rgba(29, 42, 34, 0.35);
     
     --scrollbar-thumb: rgba(58, 90, 64, 0.35);   /* forest @ 35% */
+
+    /* Sidebar / file tree (light) */
+    --sidebar-bg: var(--hikma-pine);
+    --sidebar-border: #2b4036;
+    --sidebar-fg: var(--hikma-sand);
+    --sidebar-muted: #c4cfc0;
+    --sidebar-hover-bg: var(--hikma-forest);
+    --sidebar-active-bg: var(--hikma-green);
+    --sidebar-active-fg: #ffffff;
   }
 }
 
@@ -97,6 +115,13 @@ body,
   display: flex;
   flex-direction: column;
   height: 100vh;
+}
+
+/* Horizontal split below the toolbar: sidebar | editor */
+.app-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 
 /* ── Toolbar ── */
@@ -221,11 +246,164 @@ body,
   letter-spacing: 0.04em;
 }
 
+/* ── Sidebar / file tree ── */
+
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  color: var(--sidebar-fg);
+}
+
+.sidebar-header {
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.4rem 0 0.75rem;
+  border-bottom: 1px solid var(--sidebar-border);
+}
+
+.sidebar-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sidebar-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-collapse {
+  margin-left: auto;
+  font: inherit;
+  font-size: 0.8rem;
+  line-height: 1;
+  color: var(--sidebar-muted);
+  background: none;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 5px;
+  cursor: pointer;
+}
+
+.sidebar-collapse:hover {
+  background: var(--sidebar-hover-bg);
+  color: var(--sidebar-active-fg);
+}
+
+.sidebar-tree {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.35rem 0;
+}
+
+/* Far-left hover zone that reveals a "show files" arrow when the
+   sidebar is hidden. The strip itself is invisible; only the arrow fades in. */
+.sidebar-reveal {
+  position: fixed;
+  left: 0;
+  top: 40px;            /* sits just below the 40px toolbar */
+  bottom: 0;
+  width: 18px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.sidebar-reveal-arrow {
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 120ms ease, transform 120ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 3px;
+  font-size: 0.8rem;
+  line-height: 1;
+  color: var(--sidebar-fg);
+  background: var(--sidebar-bg);
+  border: 1px solid var(--sidebar-border);
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+  box-shadow: 0 2px 10px var(--toolbar-menu-shadow);
+}
+
+.sidebar-reveal:hover .sidebar-reveal-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.tree-root,
+.tree-children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tree-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 24px;
+  padding-right: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--sidebar-fg);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.tree-row:hover {
+  background: var(--sidebar-hover-bg);
+}
+
+.tree-file.active {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-active-fg);
+}
+
+.tree-file.inert {
+  color: var(--sidebar-muted);
+  cursor: default;
+}
+
+.tree-file.inert:hover {
+  background: transparent;
+}
+
+.tree-twist {
+  width: 0.9rem;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 0.6rem;
+  color: var(--sidebar-muted);
+}
+
+.tree-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tree-dir .tree-label {
+  font-weight: 500;
+}
+
 /* ── Editor (side-by-side) ── */
 
 .editor {
   overflow: hidden;
-  min-height: 0;     /* lets the flex child actually shrink */
+  min-height: 0;
+  min-width: 0;     /* lets the editor shrink beside the sidebar */
 }
 
 .editor-source,
@@ -263,22 +441,26 @@ body,
   color: var(--crepe-color-on-background);
 }
 
-/* Scrollbars — source pane (CM) + preview pane (Crepe) */
+/* Scrollbars — source pane (CM) + preview pane (Crepe) + sidebar tree */
 .cm-scroller::-webkit-scrollbar,
-.editor-preview::-webkit-scrollbar {
+.editor-preview::-webkit-scrollbar,
+.sidebar-tree::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 
 .cm-scroller::-webkit-scrollbar-track,
 .editor-preview::-webkit-scrollbar-track,
+.sidebar-tree::-webkit-scrollbar-track,
 .cm-scroller::-webkit-scrollbar-corner,
-.editor-preview::-webkit-scrollbar-corner {
+.editor-preview::-webkit-scrollbar-corner,
+.sidebar-tree::-webkit-scrollbar-corner {
   background: transparent;
 }
 
 .cm-scroller::-webkit-scrollbar-thumb,
-.editor-preview::-webkit-scrollbar-thumb {
+.editor-preview::-webkit-scrollbar-thumb,
+.sidebar-tree::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb);
   border-radius: 6px;
   border: 2px solid transparent;   /* inset padding → slimmer thumb */
