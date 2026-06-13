@@ -10,25 +10,25 @@
   --hikma-teal:   #52796F;
 
   /* HIKMA navy palette (dark mode) */
-  --navy-rich:     #0D1B2A;
-  --navy-oxford:   #1B263B;
-  --navy-blue:     #415A77;
+  --black:     #111111;
+  --sensei-black:   #0D0E14;
+  --deep-onyx:     #272d33;
   --navy-slate:    #778DA9;
   --navy-platinum: #E0E1DD;
 
   /* ── Theme tokens: DARK defaults (navy) ── */
-  --app-bg: var(--navy-rich);
+  --app-bg: var(--black);
   --app-fg: var(--navy-platinum);
 
-  --toolbar-bg: var(--navy-oxford);
-  --toolbar-border: var(--navy-blue);
+  --toolbar-bg: var(--sensei-black);
+  --toolbar-border: var(--deep-onyx);
   --brand-fg: var(--navy-platinum);
   --brand-ar-fg: var(--navy-slate);
   --toolbar-muted: #9aa7b5;          /* file name */
   --toolbar-accent: var(--navy-slate); /* dirty dot */
 
   --toolbar-btn-bg: #233247;
-  --toolbar-btn-border: var(--navy-blue);
+  --toolbar-btn-border: var(--deep-onyx);
   --toolbar-btn-fg: #c5cdd6;
   --toolbar-btn-hover-bg: #2c3e5c;
   --toolbar-btn-hover-fg: var(--navy-platinum);

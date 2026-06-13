@@ -1,15 +1,15 @@
 /* HIKMA dark theme for Crepe — navy palette
    Consumes :root vars from App.css:
-   --navy-rich --navy-oxford --navy-blue --navy-slate --navy-platinum */
+   --black --sensei-black --deep-onyx --navy-slate --navy-platinum */
 @media (prefers-color-scheme: dark) {
   .milkdown {
     /* Page + ink: rich black paper, platinum text */
-    --crepe-color-background: var(--navy-rich);
+    --crepe-color-background: var(--black);
     --crepe-color-on-background: var(--navy-platinum);
 
     /* Surfaces: a step darker than the page, then oxford */
     --crepe-color-surface: #0b1622;
-    --crepe-color-surface-low: var(--navy-oxford);
+    --crepe-color-surface-low: var(--sensei-black);
     --crepe-color-on-surface: var(--navy-platinum);
     --crepe-color-on-surface-variant: #aab7c4;
 
@@ -25,7 +25,7 @@
 
     /* Inverse: platinum chips with oxford text */
     --crepe-color-inverse: var(--navy-platinum);
-    --crepe-color-on-inverse: var(--navy-oxford);
+    --crepe-color-on-inverse: var(--sensei-black);
 
     /* Inline code: lightened slate, distinct from body text */
     --crepe-color-inline-code: #9fb4cc;
@@ -36,7 +36,7 @@
     /* Interaction fills: rich -> oxford ladder */
     --crepe-color-hover: #142233;
     --crepe-color-selected: #25364f;
-    --crepe-color-inline-area: var(--navy-oxford);
+    --crepe-color-inline-area: var(--sensei-black);
 
     --crepe-font-title: Georgia, Cambria, 'Times New Roman', Times, serif;
     --crepe-font-default: 'Open Sans', Arial, Helvetica, sans-serif;
