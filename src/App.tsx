@@ -53,7 +53,9 @@ function App() {
   const [recentFiles, setRecentFiles] = useState<string[]>(loadRecentFiles);
   const [recentOpen, setRecentOpen] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
-  const [systemPrefersDark, setSystemPrefersDark] = useState(prefersDark.matches);
+  const [systemDark, setSystemDark] = useState(prefersDark.matches);
+  const isDark = theme === "system" ? systemDark : theme === "dark";
+  
 
   const editorViewRef = useRef<EditorView | null>(null);
 
@@ -67,12 +69,12 @@ function App() {
   });
 
   useEffect(() => {
-    const onChange = (e: MediaQueryListEvent) => setSystemPrefersDark(e.matches);
+    const onChange = (e: MediaQueryListEvent) => setSystemDark(e.matches);
     prefersDark.addEventListener("change", onChange);
     return () => prefersDark.removeEventListener("change", onChange);
   }, []);
 
-  const isDark = theme === "system" ? systemPrefersDark : theme === "dark";
+  
 
   const updateRecentFiles = useCallback((update: (prev: string[]) => string[]) => {
     setRecentFiles((prev) => {
@@ -247,7 +249,7 @@ function App() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [openFile, saveFile, saveFileAs]);
+  }, [newFile, openFile, saveFile, saveFileAs, insertText]);
 
   useEffect(() => {
     if (!isTauri) return;
@@ -320,7 +322,7 @@ function App() {
         <span className="toolbar-mode">Markdown</span>
       </header>
       <main className="editor grow min-h-0">
-        <div className="editor-whole grid h-full grid-rows-2 md:grid-cols-2 md:grid-rows-1 border-gray-300 dark:border-gray-600">
+        <div className="editor-whole grid h-full grid-rows-2 md:grid-cols-2 md:grid-rows-1 border-gray-300 dark:border-gray-800">
           <CodeMirror
             className="editor-source min-h-0 overflow-auto"
             value={source}
@@ -333,7 +335,7 @@ function App() {
               editorViewRef.current = view;
             }}
           />
-          <div className="editor-preview min-h-0 overflow-auto border-l border-gray-300 dark:border-gray-600">
+          <div className="editor-preview min-h-0 overflow-auto border-l border-gray-300 dark:border-gray-800">
             <MilkdownEditor markdown={source} onChange={setSource} />
           </div>
         </div>
