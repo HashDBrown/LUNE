@@ -36,6 +36,9 @@
   --toolbar-menu-bg: #16243a;
   --toolbar-menu-shadow: rgba(0, 0, 0, 0.5);
 
+  --scrollbar-thumb: rgba(120, 141, 169, 0.4);   /* navy-slate @ 40% */
+
+
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
   font-size: 16px;
   line-height: 24px;
@@ -71,6 +74,7 @@
     --toolbar-menu-bg: var(--hikma-pine);
     --toolbar-menu-shadow: rgba(29, 42, 34, 0.35);
     
+    --scrollbar-thumb: rgba(58, 90, 64, 0.35);   /* forest @ 35% */
   }
 }
 
@@ -257,4 +261,26 @@ body,
 .milkdown .cm-activeLineGutter {
   background-color: var(--crepe-color-selected);
   color: var(--crepe-color-on-background);
+}
+
+/* Scrollbars — source pane (CM) + preview pane (Crepe) */
+.cm-scroller::-webkit-scrollbar,
+.editor-preview::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.cm-scroller::-webkit-scrollbar-track,
+.editor-preview::-webkit-scrollbar-track,
+.cm-scroller::-webkit-scrollbar-corner,
+.editor-preview::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.cm-scroller::-webkit-scrollbar-thumb,
+.editor-preview::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 6px;
+  border: 2px solid transparent;   /* inset padding → slimmer thumb */
+  background-clip: content-box;
 }
