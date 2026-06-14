@@ -4,10 +4,12 @@ import { markdown } from "@codemirror/lang-markdown";
 import { languages } from "@codemirror/language-data";
 import { ask, message, open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
+import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { listen } from "@tauri-apps/api/event";
 import { gutters } from "@codemirror/view";
 import { MilkdownEditor } from "./MilkdownEditor";
+import { FileTree, type FileNode } from "./FileTree";
 import "./App.css";
 
 const initialSource = `# Welcome to HIKMA حكمة
@@ -46,10 +48,22 @@ function baseName(path: string) {
   return path.split(/[/\\]/).pop() ?? path;
 }
 
+function dirName(path: string) {
+  const idx = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
+  return idx === -1 ? path : path.slice(0, idx);
+}
+
+//grants the asset protocol read access to `dir` so the preview can load local images via `convertFileSrc`
+function allowAssetDir(dir: string) {
+  void invoke("allow_asset_dir", { path: dir }).catch(() => {});
+}
+
 function App() {
   const [source, setSource] = useState(initialSource);
   const [savedSource, setSavedSource] = useState(initialSource);
   const [filePath, setFilePath] = useState<string | null>(null);
+  const [workspace, setWorkspace] = useState<FileNode | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [recentFiles, setRecentFiles] = useState<string[]>(loadRecentFiles);
   const [recentOpen, setRecentOpen] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
@@ -118,6 +132,7 @@ function App() {
         setSavedSource(text);
         setFilePath(target);
         addRecentFile(target);
+        allowAssetDir(dirName(target));
       } catch (err) {
         updateRecentFiles((prev) => prev.filter((p) => p !== target));
         await message(`Could not open ${target}:\n${err}`, { title: "Open failed", kind: "error" });
@@ -125,6 +140,26 @@ function App() {
     },
     [addRecentFile, confirmDiscard, updateRecentFiles],
   );
+
+  const openWorkspace = useCallback(async () => {
+    if (!isTauri) {
+      window.alert("Opening a folder needs the desktop app — run `npm run tauri dev`.");
+      return;
+    }
+    const dir = await openDialog({ directory: true });
+    if (typeof dir !== "string") return; // cancelled
+    try {
+      const tree = await invoke<FileNode>("read_dir_tree", { path: dir });
+      setWorkspace(tree);
+      setSidebarOpen(true);
+      allowAssetDir(dir);
+    } catch (err) {
+      await message(`Could not open folder:\n${err}`, {
+        title: "Open folder failed",
+        kind: "error",
+      });
+    }
+  }, []);
 
   const newFile = useCallback(async () => {
     if (!(await confirmDiscard())) return;
@@ -211,6 +246,7 @@ function App() {
     const unlistens = [
       listen("menu-new", () => void newFile()),
       listen("menu-open", () => void openFile()),
+      listen("menu-open-folder", () => void openWorkspace()),
       listen("menu-save", () => void saveFile()),
       listen("menu-save-as", () => void saveFileAs()),
       listen("menu-theme", (event) => {
@@ -233,7 +269,7 @@ function App() {
     return () => {
       void Promise.all(unlistens).then((fns) => fns.forEach((fn) => fn()));
     };
-  }, [insertText, newFile, openFile, saveFile, saveFileAs]);
+  }, [insertText, newFile, openFile, openWorkspace, saveFile, saveFileAs]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -241,7 +277,7 @@ function App() {
       const key = e.key.toLowerCase();
       if (key === "o") {
         e.preventDefault();
-        void openFile();
+        void (e.shiftKey ? openWorkspace() : openFile());
       } else if (key === "s") {
         e.preventDefault();
         void (e.shiftKey ? saveFileAs() : saveFile());
@@ -249,7 +285,7 @@ function App() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [newFile, openFile, saveFile, saveFileAs, insertText]);
+  }, [newFile, openFile, openWorkspace, saveFile, saveFileAs, insertText]);
 
   useEffect(() => {
     if (!isTauri) return;
@@ -292,6 +328,7 @@ function App() {
         </span>
         <div className="toolbar-actions">
           <button className="toolbar-btn" onClick={() => void openFile()}>Open</button>
+          <button className="toolbar-btn" onClick={() => void openWorkspace()}>Open Folder</button>
           <div className="toolbar-recent" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
@@ -321,25 +358,59 @@ function App() {
         </div>
         <span className="toolbar-mode">Markdown</span>
       </header>
-      <main className="editor grow min-h-0">
-        <div className="editor-whole grid h-full grid-rows-2 md:grid-cols-2 md:grid-rows-1 border-gray-300 dark:border-gray-800">
-          <CodeMirror
-            className="editor-source min-h-0 overflow-auto"
-            value={source}
-            height="100%"
-            theme={isDark ? "dark" : "light"}
-            basicSetup={{ lineNumbers: true, foldGutter: false }}
-            extensions={[markdown({ codeLanguages: languages }), gutters({ fixed: false })]}
-            onChange={(value) => setSource(value)}
-            onCreateEditor={(view) => {
-              editorViewRef.current = view;
-            }}
-          />
-          <div className="editor-preview min-h-0 overflow-auto border-l border-gray-300 dark:border-gray-800">
-            <MilkdownEditor markdown={source} onChange={setSource} />
+      <div className="app-body">
+        {workspace && !sidebarOpen && (
+          <div
+            className="sidebar-reveal"
+            title="Show files"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <span className="sidebar-reveal-arrow">⟩</span>
           </div>
-        </div>
-      </main>
+        )}
+        {workspace && sidebarOpen && (
+          <aside className="sidebar">
+            <div className="sidebar-header">
+              <span className="sidebar-title" title={workspace.path}>
+                {workspace.name}
+              </span>
+              <button
+                className="sidebar-collapse"
+                title="Hide sidebar"
+                onClick={() => setSidebarOpen(false)}
+              >
+                ⟨
+              </button>
+            </div>
+            <div className="sidebar-tree">
+              <FileTree
+                root={workspace}
+                activePath={filePath}
+                onOpenFile={(path) => void openFile(path)}
+              />
+            </div>
+          </aside>
+        )}
+        <main className="editor grow min-h-0">
+          <div className="editor-whole grid h-full grid-rows-2 md:grid-cols-2 md:grid-rows-1 border-gray-300 dark:border-gray-800">
+            <CodeMirror
+              className="editor-source min-h-0 overflow-auto"
+              value={source}
+              height="100%"
+              theme={isDark ? "dark" : "light"}
+              basicSetup={{ lineNumbers: true, foldGutter: false }}
+              extensions={[markdown({ codeLanguages: languages }), gutters({ fixed: false })]}
+              onChange={(value) => setSource(value)}
+              onCreateEditor={(view) => {
+                editorViewRef.current = view;
+              }}
+            />
+            <div className="editor-preview min-h-0 overflow-auto border-l border-gray-300 dark:border-gray-800">
+              <MilkdownEditor markdown={source} onChange={setSource} filePath={filePath} />
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
