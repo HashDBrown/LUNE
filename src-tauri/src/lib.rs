@@ -1,7 +1,8 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 use serde::Serialize;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 use tauri::menu::{AboutMetadata, Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::{Emitter, Manager};
 
@@ -105,9 +106,38 @@ fn read_dir_tree(path: String) -> Result<FileNode, String> {
     read_node(Path::new(&path), 0).ok_or_else(|| "could not read directory".to_string())
 }
 
+//tracks the directories already granted asset access this session, so we don't keep re-adding overlapping grants.
+#[derive(Default)]
+struct AssetGrants(Mutex<Vec<PathBuf>>);
+
+//grants the asset protocol read access to a directory the user has explicitly opened (a file's folder or a workspace root)
+#[tauri::command]
+fn allow_asset_dir(
+    app: tauri::AppHandle,
+    grants: tauri::State<'_, AssetGrants>,
+    path: String,
+) -> Result<(), String> {
+    // Canonicalize for a reliable containment check (resolves `..`, symlinks).
+    // Fall back to the raw path if canonicalization fails for any reason.
+    let canon = fs::canonicalize(&path).unwrap_or_else(|_| PathBuf::from(&path));
+
+    let mut granted = grants.0.lock().map_err(|e| e.to_string())?;
+    // Already covered by (equal to, or nested under) an existing grant? Skip.
+    if granted.iter().any(|root| canon.starts_with(root)) {
+        return Ok(());
+    }
+
+    app.asset_protocol_scope()
+        .allow_directory(&path, true)
+        .map_err(|e| e.to_string())?;
+    granted.push(canon);
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .manage(AssetGrants::default())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
@@ -394,7 +424,11 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, read_dir_tree])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            read_dir_tree,
+            allow_asset_dir
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

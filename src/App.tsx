@@ -48,6 +48,16 @@ function baseName(path: string) {
   return path.split(/[/\\]/).pop() ?? path;
 }
 
+function dirName(path: string) {
+  const idx = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
+  return idx === -1 ? path : path.slice(0, idx);
+}
+
+//grants the asset protocol read access to `dir` so the preview can load local images via `convertFileSrc`
+function allowAssetDir(dir: string) {
+  void invoke("allow_asset_dir", { path: dir }).catch(() => {});
+}
+
 function App() {
   const [source, setSource] = useState(initialSource);
   const [savedSource, setSavedSource] = useState(initialSource);
@@ -122,6 +132,7 @@ function App() {
         setSavedSource(text);
         setFilePath(target);
         addRecentFile(target);
+        allowAssetDir(dirName(target));
       } catch (err) {
         updateRecentFiles((prev) => prev.filter((p) => p !== target));
         await message(`Could not open ${target}:\n${err}`, { title: "Open failed", kind: "error" });
@@ -141,6 +152,7 @@ function App() {
       const tree = await invoke<FileNode>("read_dir_tree", { path: dir });
       setWorkspace(tree);
       setSidebarOpen(true);
+      allowAssetDir(dir);
     } catch (err) {
       await message(`Could not open folder:\n${err}`, {
         title: "Open folder failed",
@@ -394,7 +406,7 @@ function App() {
               }}
             />
             <div className="editor-preview min-h-0 overflow-auto border-l border-gray-300 dark:border-gray-800">
-              <MilkdownEditor markdown={source} onChange={setSource} />
+              <MilkdownEditor markdown={source} onChange={setSource} filePath={filePath} />
             </div>
           </div>
         </main>
